@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<title>QuranID</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg:      #0f0f0f;
+  --surface: #1a1a1a;
+  --surf2:   #2a2a2a;
+  --accent:  #c9a84c;
+  --text:    #ffffff;
+  --muted:   #888888;
+}
+
+html, body {
+  width: 900px; height: 650px;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+/* ── Top bar ───────────────────────────────── */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  height: 52px;
+  background: var(--bg);
+}
+.app-title {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -.2px;
+  color: var(--text);
+}
+
+.lang-btn {
+  background: var(--surface);
+  border: none;
+  color: var(--muted);
+  padding: 6px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  transition: color .15s;
+}
+.lang-btn:hover { color: var(--text); }
+
+/* ── Tabs ──────────────────────────────────── */
+.tabs {
+  display: flex;
+  background: var(--bg);
+  padding: 0 20px;
+  height: 36px;
+}
+.tab {
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--muted);
+  border-bottom: 2px solid transparent;
+  transition: color .15s, border-color .15s;
+}
+.tab:hover { color: #aaa; }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ── Content shell ─────────────────────────── */
+/* 650 - 52 - 36 = 562px */
+.content { height: 562px; overflow: hidden; }
+.panel { display: none; height: 100%; }
+.panel.active { display: flex; }
+
+/* ═══════════════════════════════════════════════
+   IDENTIFY PANEL
+═══════════════════════════════════════════════ */
+#p-identify {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.id-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ── Button wrapper ── */
+.btn-wrap {
+  width: 160px;
+  height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── The circle ── */
+.big-btn {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: none;
+  outline: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .2s, transform .1s;
+}
+.big-btn:hover  { background: #202020; }
+.big-btn:active { transform: scale(.94); }
+
+/* ── Mic icon (idle) ── */
+.mic-icon {
+  font-size: 48px;
+  line-height: 1;
+}
+.btn-wrap.listening .mic-icon { display: none; }
+
+/* ── Wave bars (listening) ── */
+.wave-bars {
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 6px;
+  height: 54px;
+  width: 70px;
+}
+.bar {
+  width: 6px;
+  background: var(--accent);
+  border-radius: 3px;
+  min-height: 6px;
+  animation: wave-dance 1.25s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+.bar:nth-child(1) { animation-delay:   0ms; }
+.bar:nth-child(2) { animation-delay: 110ms; }
+.bar:nth-child(3) { animation-delay: 220ms; }
+.bar:nth-child(4) { animation-delay: 330ms; }
+.bar:nth-child(5) { animation-delay: 220ms; }
+.bar:nth-child(6) { animation-delay: 110ms; }
+.bar:nth-child(7) { animation-delay:   0ms; }
+
+@keyframes wave-dance {
+  0%, 100% { height: 16%; opacity: .45; }
+  50%       { height: 90%; opacity: 1;   }
+}
+
+.btn-wrap.listening .wave-bars { display: flex; }
+
+/* ── Button label ── */
+.btn-label {
+  margin-top: 20px;
+  font-size: 14px;
+  color: var(--muted);
+  text-align: center;
+  transition: color .25s;
+}
+
+/* ── Result area ── */
+.result-area {
+  margin-top: 32px;
+  height: 68px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity .5s ease, transform .5s ease;
+  pointer-events: none;
+}
+.result-area.show {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+.res-name {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text);
+  text-align: center;
+  line-height: 1.2;
+  max-width: 580px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.res-nat {
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* ═══════════════════════════════════════════════
+   RECITERS PANEL
+═══════════════════════════════════════════════ */
+#p-reciters {
+  flex-direction: column;
+  padding: 16px 20px;
+  gap: 10px;
+}
+
+.search-input {
+  width: 100%;
+  background: var(--surface);
+  border: none;
+  color: var(--text);
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  flex-shrink: 0;
+}
+.search-input::placeholder { color: #555; }
+
+.list-wrap {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Reciter card row */
+.rec-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 8px;
+}
+.rec-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+.rec-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rec-ar {
+  font-size: 13px;
+  color: var(--muted);
+  font-family: 'Traditional Arabic', 'Arabic Typesetting', system-ui, sans-serif;
+  direction: rtl;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rec-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+.nat-pill {
+  background: var(--surf2);
+  color: var(--muted);
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 8px;
+}
+.chip {
+  background: var(--surf2);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 8px;
+}
+.empty-msg {
+  padding: 40px 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* ═══════════════════════════════════════════════
+   HISTORY PANEL
+═══════════════════════════════════════════════ */
+#p-history {
+  flex-direction: column;
+  padding: 16px 20px;
+  gap: 10px;
+}
+.hist-wrap {
+  flex: 1;
+  overflow-y: auto;
+}
+.hist-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 8px;
+}
+.hist-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+.hist-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hist-file {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hist-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+.hist-score {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--accent);
+}
+.hist-date {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 2px; }
+
+/* ── RTL overrides ── */
+body.rtl { direction: rtl; }
+body.rtl .topbar { flex-direction: row-reverse; }
+body.rtl .tabs   { flex-direction: row-reverse; }
+body.rtl .rec-right { margin-left: 0; margin-right: 12px; }
+body.rtl .res-name {
+  font-family: 'Traditional Arabic', 'Arabic Typesetting', system-ui, sans-serif;
+}
+</style>
+</head>
+<body>
+
+<!-- ── Top bar ── -->
+<div class="topbar">
+  <div class="app-title">QareeID</div>
+  <button class="lang-btn" id="langBtn" onclick="toggleLang()">عربي</button>
+</div>
+
+<!-- ── Tabs ── -->
+<div class="tabs">
+  <div class="tab active" id="tab-identify" onclick="showTab('identify')">
+    <span data-en="Identify" data-ar="تعرف">Identify</span>
+  </div>
+  <div class="tab" id="tab-reciters" onclick="showTab('reciters')">
+    <span data-en="Reciters" data-ar="القراء">Reciters</span>
+  </div>
+  <div class="tab" id="tab-history" onclick="showTab('history')">
+    <span data-en="History" data-ar="السجل">History</span>
+  </div>
+</div>
+
+<!-- ── Content ── -->
+<div class="content">
+
+  <!-- IDENTIFY -->
+  <div class="panel active" id="p-identify">
+    <div class="id-center">
+
+      <div class="btn-wrap" id="btnWrap">
+        <button class="big-btn" id="mainBtn" onclick="handleTap()">
+          <span class="mic-icon">🎤</span>
+          <div class="wave-bars">
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+          </div>
+        </button>
+      </div>
+
+      <div class="btn-label" id="btnLabel"
+           data-en="Tap to Identify" data-ar="اضغط للتعرف">Tap to Identify</div>
+
+      <div class="result-area" id="resultArea">
+        <div class="res-name" id="resName"></div>
+        <div class="res-nat"  id="resNat"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- RECITERS -->
+  <div class="panel" id="p-reciters">
+    <input class="search-input" id="searchInput" type="text"
+           placeholder="Search reciters…"
+           data-placeholder-en="Search reciters…"
+           data-placeholder-ar="ابحث عن القراء…"
+           oninput="filterReciters()">
+    <div class="list-wrap">
+      <div id="tblBody">
+        <div class="empty-msg">Loading…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="panel" id="p-history">
+    <div class="hist-wrap">
+      <div id="histBody">
+        <div class="empty-msg">Loading…</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /content -->
+
+<script>
+// ══ Global state ════════════════════════════════════
+let isAr        = false;
+let apiReady    = false;
+let isListening = false;
+let lastResult  = null;
+let allReciters = [];
+let recitersLoaded  = false;
+let historyLoaded   = false;
+let prefetchDone    = false;
+// nationality lookup keyed by both arabic_name and internal name
+let natMap = {};
+
+// ══ pywebview handshake ══════════════════════════════
+window.addEventListener('pywebviewready', () => {
+  if (apiReady) return;
+  apiReady = true;
+  prefetchReciters();
+});
+
+(function poll() {
+  if (typeof pywebview !== 'undefined' && pywebview.api) {
+    if (!apiReady) { apiReady = true; prefetchReciters(); }
+    return;
+  }
+  setTimeout(poll, 150);
+})();
+
+function prefetchReciters() {
+  if (prefetchDone) return;
+  prefetchDone = true;
+  pywebview.api.get_reciters().then(r => {
+    if (r.success && r.reciters) {
+      allReciters = r.reciters;
+      buildNatMap(r.reciters);
+    }
+  }).catch(() => {});
+}
+
+function buildNatMap(reciters) {
+  reciters.forEach(r => {
+    const nat = r.nationality || '';
+    if (r.arabic_name) natMap[r.arabic_name] = nat;
+    natMap[r.name] = nat;
+  });
+}
+
+// ══ Language toggle ══════════════════════════════════
+function toggleLang() {
+  isAr = !isAr;
+  document.getElementById('langBtn').textContent = isAr ? 'English' : 'عربي';
+  document.body.classList.toggle('rtl', isAr);
+  document.documentElement.setAttribute('lang', isAr ? 'ar' : 'en');
+  document.documentElement.setAttribute('dir', isAr ? 'rtl' : 'ltr');
+
+  document.querySelectorAll('[data-en]').forEach(el => {
+    el.textContent = isAr ? el.dataset.ar : el.dataset.en;
+  });
+  document.querySelectorAll('[data-placeholder-en]').forEach(el => {
+    el.placeholder = isAr ? el.dataset.placeholderAr : el.dataset.placeholderEn;
+  });
+
+  // keep the label text consistent with current state
+  if (isListening) {
+    document.getElementById('btnLabel').textContent = isAr ? 'جاري الاستماع…' : 'Listening…';
+  }
+
+  if (lastResult) renderResult(lastResult);
+}
+
+// ══ Tab switching ════════════════════════════════════
+function showTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  document.getElementById('p-' + name).classList.add('active');
+
+  if (name === 'reciters') {
+    if (allReciters.length && !recitersLoaded) {
+      recitersLoaded = true;
+      renderReciters(allReciters);
+    } else if (!recitersLoaded) {
+      loadReciters();
+    }
+  }
+  if (name === 'history' && !historyLoaded) loadHistory();
+}
+
+// ══ Main button tap ══════════════════════════════════
+function handleTap() {
+  if (!apiReady || isListening) return;
+  startListening();
+}
+
+// ══ Single 15-second recording ═══════════════════════
+async function startListening() {
+  isListening = true;
+  lastResult  = null;
+  setListening(true);
+
+  try {
+    const r = await pywebview.api.listen(15);
+    console.log('confidence:', r.confidence, 'score:', r.score);
+    lastResult = r.success ? r : null;
+    if (r.success && r.score > 0.20) {
+      renderResult(r);
+    } else {
+      renderUnknown();
+    }
+  } catch (_) {
+    renderUnknown();
+  }
+
+  isListening = false;
+  setListening(false);
+}
+
+function setListening(on) {
+  const wrap = document.getElementById('btnWrap');
+  const lbl  = document.getElementById('btnLabel');
+  if (on) {
+    wrap.classList.add('listening');
+    lbl.textContent = isAr ? 'جاري الاستماع…' : 'Listening…';
+    lbl.style.color = 'var(--accent)';
+  } else {
+    wrap.classList.remove('listening');
+    lbl.textContent = isAr ? 'اضغط للتعرف' : 'Tap to Identify';
+    lbl.style.color = '';
+  }
+}
+
+// ══ Result rendering ════════════════════════════════
+function renderResult(r) {
+  const nameEl = document.getElementById('resName');
+  const natEl  = document.getElementById('resNat');
+
+  // Name: arabic in AR mode, display_name otherwise
+  nameEl.textContent = (isAr && r.arabic_name) ? r.arabic_name : (r.name || '—');
+
+  // Nationality: look up from pre-fetched map
+  const nat = natMap[r.arabic_name] || natMap[r.name] || '';
+  natEl.textContent = nat;
+
+  // Animate in (reset first to re-trigger transition)
+  const area = document.getElementById('resultArea');
+  area.classList.remove('show');
+  void area.offsetWidth;       // force reflow
+  area.classList.add('show');
+}
+
+function renderUnknown() {
+  document.getElementById('resName').textContent = isAr ? 'غير معروف' : 'Unknown';
+  document.getElementById('resNat').textContent  = '';
+  const area = document.getElementById('resultArea');
+  area.classList.remove('show');
+  void area.offsetWidth;
+  area.classList.add('show');
+}
+
+// ══ Reciters list ════════════════════════════════════
+function loadReciters() {
+  if (!apiReady) { setTimeout(loadReciters, 300); return; }
+  document.getElementById('tblBody').innerHTML =
+    '<div class="empty-msg">' + (isAr ? 'جارٍ التحميل…' : 'Loading…') + '</div>';
+
+  pywebview.api.get_reciters().then(r => {
+    recitersLoaded = true;
+    if (r.success && r.reciters) {
+      allReciters = r.reciters;
+      buildNatMap(r.reciters);
+      renderReciters(allReciters);
+    } else {
+      emptyTable(isAr ? 'لا يوجد قراء مسجلون' : 'No reciters enrolled');
+    }
+  }).catch(() => emptyTable(isAr ? 'خطأ في التحميل' : 'Failed to load'));
+}
+
+function renderReciters(data) {
+  if (!data.length) { emptyTable(isAr ? 'لا توجد نتائج' : 'No results'); return; }
+  document.getElementById('tblBody').innerHTML = data.map(r => `
+    <div class="rec-row">
+      <div class="rec-info">
+        <div class="rec-name">${esc(r.name)}</div>
+        <div class="rec-ar">${esc(r.arabic_name)}</div>
+      </div>
+      <div class="rec-right">
+        ${r.nationality ? `<span class="nat-pill">${esc(r.nationality)}</span>` : ''}
+        <span class="chip">${r.sample_count || 0}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function emptyTable(msg) {
+  document.getElementById('tblBody').innerHTML = `<div class="empty-msg">${msg}</div>`;
+}
+
+function filterReciters() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  if (!q) { renderReciters(allReciters); return; }
+  renderReciters(allReciters.filter(r =>
+    [r.name, r.arabic_name, r.nationality, r.style]
+      .some(v => (v || '').toLowerCase().includes(q))
+  ));
+}
+
+// ══ History list ═════════════════════════════════════
+function loadHistory() {
+  if (!apiReady) { setTimeout(loadHistory, 300); return; }
+  document.getElementById('histBody').innerHTML =
+    '<div class="empty-msg">' + (isAr ? 'جارٍ التحميل…' : 'Loading…') + '</div>';
+
+  pywebview.api.get_history().then(r => {
+    historyLoaded = true;
+    if (r.success && r.history && r.history.length) {
+      renderHistory(r.history);
+    } else {
+      document.getElementById('histBody').innerHTML =
+        '<div class="empty-msg">' + (isAr ? 'لا توجد تعرفات بعد' : 'No identifications yet') + '</div>';
+    }
+  }).catch(() => {
+    document.getElementById('histBody').innerHTML =
+      '<div class="empty-msg">' + (isAr ? 'خطأ في التحميل' : 'Failed to load') + '</div>';
+  });
+}
+
+function renderHistory(data) {
+  document.getElementById('histBody').innerHTML = data.map(h => {
+    const name   = h.matched_name || '—';
+    const file   = (h.query_file || '').replace(/\\/g, '/').split('/').pop() || '—';
+    const score  = Math.round((h.score || 0) * 100) + '%';
+    const date   = (h.identified_at || '').slice(0, 10);
+    return `
+      <div class="hist-row">
+        <div class="hist-info">
+          <div class="hist-name">${esc(name)}</div>
+          <div class="hist-file">${esc(file)}</div>
+        </div>
+        <div class="hist-right">
+          <span class="hist-score">${score}</span>
+          <span class="hist-date">${date}</span>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function esc(v) {
+  if (!v) return '<span style="color:var(--muted)">—</span>';
+  return String(v)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+# Virtual environment
+venv/
+
+# Database (too large, users create their own)
+data/quranid.db
+
+# Audio samples (too large for GitHub)
+data/samples/
+
+# Pretrained model weights (downloaded automatically)
+pretrained_models/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Environment file (contains API keys — never commit)
+.env
+
+# PyInstaller output
+dist/
+build/
+*.spec
+
+# VS Code
+.vscode/
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Temp files
+*.tmp
+*.log

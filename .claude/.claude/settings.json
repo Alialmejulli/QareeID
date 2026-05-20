@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/Admin/Desktop/quranID/**)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\Admin\\Desktop\\quranID"
+    ]
+  }
+}

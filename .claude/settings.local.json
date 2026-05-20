@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\Admin\\\\Desktop\\\\quranid\" -Recurse)",
+      "Bash(Select-Object FullName, Length)",
+      "Bash(Format-Table -AutoSize)",
+      "Bash(ls -la /mnt/c/Users/Admin/Desktop/quranid/ 2>/dev/null || echo \"Directory not found or empty\")",
+      "Read(//mnt/c/Users/Admin/Desktop/**)",
+      "PowerShell(& \"c:\\\\Users\\\\Admin\\\\Desktop\\\\quranid\\\\venv\\\\Scripts\\\\python.exe\" -m pip install --upgrade pip 2>&1)",
+      "PowerShell(& \"c:\\\\Users\\\\Admin\\\\Desktop\\\\quranid\\\\venv\\\\Scripts\\\\pip.exe\" install python-dotenv anthropic 2>&1)",
+      "PowerShell(& \"c:\\\\Users\\\\Admin\\\\Desktop\\\\quranid\\\\venv\\\\Scripts\\\\pip.exe\" install pydub soundfile librosa 2>&1)",
+      "PowerShell(& \"c:\\\\Users\\\\Admin\\\\Desktop\\\\quranid\\\\venv\\\\Scripts\\\\pip.exe\" install torch torchaudio --index-url https://download.pytorch.org/whl/cpu 2>&1)",
+      "PowerShell(& \"c:\\\\Users\\\\Admin\\\\Desktop\\\\quranid\\\\venv\\\\Scripts\\\\pip.exe\" install speechbrain 2>&1)",
+      "PowerShell(& \"c:\\\\Users\\\\Admin\\\\Desktop\\\\quranid\\\\venv\\\\Scripts\\\\pip.exe\" install openai-whisper 2>&1)",
+      "PowerShell(& \"c:\\\\Users\\\\Admin\\\\Desktop\\\\quranid\\\\venv\\\\Scripts\\\\python.exe\" \"c:\\\\Users\\\\Admin\\\\Desktop\\\\quranid\\\\main.py\" --help)"
+    ]
+  }
+}
