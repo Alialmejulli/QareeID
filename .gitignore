@@ -35,3 +35,11 @@ Desktop.ini
 # Temp files
 *.tmp
 *.log
+
+# Claude Code workspace
+.claude/
+
+# Documentation / private notes
+CONTEXT.md
+QuranID_V1.md
+quranID_v1.md

@@ -121,6 +121,7 @@ html, body {
 }
 .big-btn:hover  { background: #202020; }
 .big-btn:active { transform: scale(.94); }
+.big-btn.loading { opacity: 0.4; cursor: not-allowed; }
 
 /* ── Mic icon (idle) ── */
 .mic-icon {
@@ -402,7 +403,7 @@ body.rtl .res-name {
     <div class="id-center">
 
       <div class="btn-wrap" id="btnWrap">
-        <button class="big-btn" id="mainBtn" onclick="handleTap()">
+        <button class="big-btn loading" id="mainBtn" onclick="handleTap()">
           <span class="mic-icon">🎤</span>
           <div class="wave-bars">
             <div class="bar"></div>
@@ -417,7 +418,7 @@ body.rtl .res-name {
       </div>
 
       <div class="btn-label" id="btnLabel"
-           data-en="Tap to Identify" data-ar="اضغط للتعرف">Tap to Identify</div>
+           data-en="Tap to Identify" data-ar="اضغط للتعرف">Loading...</div>
 
       <div class="result-area" id="resultArea">
         <div class="res-name" id="resName"></div>
@@ -466,15 +467,28 @@ let prefetchDone    = false;
 let natMap = {};
 
 // ══ pywebview handshake ══════════════════════════════
-window.addEventListener('pywebviewready', () => {
+function setApiReady() {
   if (apiReady) return;
   apiReady = true;
+  document.getElementById('mainBtn').classList.remove('loading');
+  document.getElementById('btnLabel').textContent = isAr ? 'اضغط للتعرف' : 'Tap to Identify';
   prefetchReciters();
+}
+
+window.addEventListener('pywebviewready', () => {
+  setApiReady();
 });
+
+// Fallback in case pywebviewready already fired or never fires
+setTimeout(() => {
+  if (!apiReady) {
+    setApiReady();
+  }
+}, 3000);
 
 (function poll() {
   if (typeof pywebview !== 'undefined' && pywebview.api) {
-    if (!apiReady) { apiReady = true; prefetchReciters(); }
+    setApiReady();
     return;
   }
   setTimeout(poll, 150);
@@ -542,24 +556,35 @@ function showTab(name) {
 
 // ══ Main button tap ══════════════════════════════════
 function handleTap() {
-  if (!apiReady || isListening) return;
+  if (!apiReady) return;
+  if (isListening) {
+    pywebview.api.stop_listen();
+    return;
+  }
   startListening();
 }
 
 // ══ Single 15-second recording ═══════════════════════
 async function startListening() {
+  // Reset result when starting new recording
+  document.getElementById('resName').textContent = '';
+  document.getElementById('resNat').textContent = '';
+  lastResult = null;
   isListening = true;
-  lastResult  = null;
   setListening(true);
 
   try {
     const r = await pywebview.api.listen(15);
-    console.log('confidence:', r.confidence, 'score:', r.score);
-    lastResult = r.success ? r : null;
-    if (r.success && r.score > 0.20) {
-      renderResult(r);
+    if (r.stopped) {
+      // user cancelled — just reset, don't show Unknown
     } else {
-      renderUnknown();
+      console.log('confidence:', r.confidence, 'score:', r.score);
+      lastResult = r.success ? r : null;
+      if (r.success && r.score > 0.20) {
+        renderResult(r);
+      } else {
+        renderUnknown();
+      }
     }
   } catch (_) {
     renderUnknown();
@@ -574,7 +599,7 @@ function setListening(on) {
   const lbl  = document.getElementById('btnLabel');
   if (on) {
     wrap.classList.add('listening');
-    lbl.textContent = isAr ? 'جاري الاستماع…' : 'Listening…';
+    lbl.textContent = isAr ? 'اضغط للإيقاف' : 'Tap to stop';
     lbl.style.color = 'var(--accent)';
   } else {
     wrap.classList.remove('listening');

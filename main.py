@@ -13,6 +13,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 load_dotenv()
 
+DEBUG = os.getenv("QAREE_DEBUG", "0") == "1"
+
 AUDIO_EXTS = {".mp3", ".wav", ".flac", ".m4a", ".ogg", ".aac"}
 
 
@@ -210,17 +212,54 @@ def cmd_listen(args):
     print(f"Listening for {duration} seconds... (play your audio now)")
     print("-" * 40)
 
-    audio = sd.rec(int(duration * sr), samplerate=sr, channels=1, dtype="float32")
-    # show a simple countdown
-    import time
-    for remaining in range(duration, 0, -1):
-        print(f"  {remaining}s remaining...", end="\r")
-        time.sleep(1)
-    sd.wait()
+    # Try WASAPI HyperX first (device 32), fallback to default
+    try:
+        audio = sd.rec(int(duration * sr), samplerate=sr,
+                       channels=1, dtype='float32', device=32,
+                       extra_settings=sd.WasapiSettings(exclusive=False))
+        # show a simple countdown
+        import time
+        for remaining in range(duration, 0, -1):
+            print(f"  {remaining}s remaining...", end="\r")
+            time.sleep(1)
+        sd.wait()
+    except Exception:
+        try:
+            # Try with 48000 native rate then resample
+            import librosa
+            audio_48k = sd.rec(int(duration * 48000), samplerate=48000,
+                               channels=1, dtype='float32', device=32)
+            sd.wait()
+            audio = librosa.resample(audio_48k.flatten(),
+                                     orig_sr=48000, target_sr=sr)
+        except Exception:
+            # Fallback to default device
+            audio = sd.rec(int(duration * sr), samplerate=sr,
+                           channels=1, dtype='float32')
+            sd.wait()
+
+    if audio.ndim > 1:
+        audio = audio.flatten()
     print("  Recording done.          ")
     print("-" * 40)
 
     audio = audio.flatten()
+
+    import numpy as np
+    audio_flat = audio.flatten() if audio.ndim > 1 else audio
+    rms = float(np.sqrt(np.mean(audio_flat ** 2)))
+    peak = float(np.max(np.abs(audio_flat)))
+    if DEBUG: print(f"[DEBUG] RMS: {rms:.5f}  Peak: {peak:.5f}  Device used: default")
+
+    # Amplify quiet mic input
+    rms = float(np.sqrt(np.mean(audio_flat ** 2)))
+    if rms < 0.02 and rms > 0.001:
+        gain = 0.02 / rms
+        gain = min(gain, 10.0)
+        audio_flat = audio_flat * gain
+        if DEBUG: print(f"[DEBUG] Applied gain: {gain:.1f}x  New RMS: {float(np.sqrt(np.mean(audio_flat**2))):.5f}")
+
+    audio = audio_flat
 
     # save to temp file so identify logic can reuse it
     tmp = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
@@ -346,7 +385,7 @@ def build_parser():
 
     # listen
     p_listen = sub.add_parser("listen", help="Record from microphone and identify the reciter")
-    p_listen.add_argument("--duration", type=int, default=10,
+    p_listen.add_argument("--duration", type=int, default=25,
                           help="How many seconds to record (default: 10)")
 
     # history

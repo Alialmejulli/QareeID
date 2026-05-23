@@ -26,6 +26,14 @@ def load_audio(path: str) -> tuple[np.ndarray, int]:
     if sr != TARGET_SR:
         audio = librosa.resample(audio, orig_sr=sr, target_sr=TARGET_SR)
 
+    try:
+        import noisereduce as nr
+        audio = nr.reduce_noise(y=audio, sr=TARGET_SR, stationary=False)
+    except ImportError:
+        pass
+    except Exception:
+        pass
+
     peak = np.abs(audio).max()
     if peak > 0:
         audio = audio / peak

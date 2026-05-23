@@ -2,8 +2,8 @@ import os
 import json
 import numpy as np
 
-CONFIDENT_THRESHOLD = 0.55
-UNCERTAIN_THRESHOLD = 0.35
+CONFIDENT_THRESHOLD = 0.50
+UNCERTAIN_THRESHOLD = 0.15
 
 
 def _cosine(a: np.ndarray, b: np.ndarray) -> float:
