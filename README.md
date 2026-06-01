@@ -3,8 +3,6 @@
 **Identify Quran reciters from audio clips using voice fingerprinting.**
 
 [![Download](https://img.shields.io/badge/Download-QareeID.exe-blue?style=for-the-badge)](https://github.com/Alialmejulli/QareeID/releases/latest)
-![Platform](https://img.shields.io/badge/Platform-Windows-lightgrey?style=for-the-badge)
-![Offline](https://img.shields.io/badge/Works-Offline-green?style=for-the-badge)
 
 ---
 
