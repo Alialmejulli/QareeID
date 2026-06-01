@@ -21,8 +21,6 @@ QareeID listens to a Quran recitation and tells you which reciter is speaking, w
 - Works fully offline — no internet required
 - Claude API fallback for uncertain matches (optional)
 
-## For developers
-See [CONTEXT.md](CONTEXT.md) for full technical documentation.
 
 ## Built with
 - Python 3.11
